@@ -1,0 +1,199 @@
+Kenapa jadi gini bos harusnya saya mindahin kartu kolom 1 posisi 1 ke kolom 2 posisi 1 
+
+Harusnya kartu kolom 2 posisi 1 berubah jadi 2 kenapa jadi 0 harusnya 2 bang
+
+"columns": [
+        {
+            "id": "b0c2cf58-eec8-4e30-9381-c663721d1c66",
+            "name": "1",
+            "position": 1,
+            "board_id": "b629267b-f96a-4c85-bdef-0967d7be2469",
+            "cards": [
+                {
+                    "id": "5d13ef51-bcee-4886-9f29-d0cdbfa1c350",
+                    "title": "1.2",
+                    "description": "dfs",
+                    "position": 1,
+                    "column_id": "b0c2cf58-eec8-4e30-9381-c663721d1c66"
+                }
+            ]
+        },
+        {
+            "id": "c3039945-0625-42f1-9cb2-d2305f0b0dc4",
+            "name": "qew",
+            "position": 2,
+            "board_id": "b629267b-f96a-4c85-bdef-0967d7be2469",
+            "cards": [
+                {
+                    "id": "90c49a56-1105-4e48-8e8d-d4c9b66596af",
+                    "title": "2.1",
+                    "description": "dggdf",
+                    "position": 0,
+                    "column_id": "c3039945-0625-42f1-9cb2-d2305f0b0dc4"
+                },
+                {
+                    "id": "892cf6eb-ac20-4685-97f2-f9124021a480",
+                    "title": "1.1",
+                    "description": "dad",
+                    "position": 1,
+                    "column_id": "c3039945-0625-42f1-9cb2-d2305f0b0dc4"
+                }
+            ]
+        }
+    ]
+
+const { getCardsByColumnId, createCard, updateCard, deleteCard, getCardById, shiftCardPositions, updateCardPositionAndColumn, rearrangeCardsInColumn } = require('../models/cardModel');
+
+// Mendapatkan kartu-kartu berdasarkan column ID
+const getCards = async (req, res) => {
+    try {
+        const { columnId } = req.params;
+        const cards = await getCardsByColumnId(columnId);
+        res.json(cards);
+    } catch (err) {
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+// Menambahkan kartu baru
+const addCard = async (req, res) => {
+    try {
+        const { title, description, position } = req.body;
+        const { columnId } = req.params;
+        const newCard = await createCard(title, description, position, columnId);
+        res.status(201).json(newCard);
+    } catch (err) {
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+// Memperbarui kartu
+const editCard = async (req, res) => {
+    try {
+        const { cardId } = req.params;
+        const { title, description } = req.body;
+        const updatedCard = await updateCard(cardId, title, description);
+        res.json(updatedCard);
+    } catch (err) {
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+
+// Menghapus kartu
+const removeCard = async (req, res) => {
+    try {
+        const { cardId } = req.params;
+        await deleteCard(cardId);
+        res.status(204).end();
+    } catch (err) {
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+const moveCard = async (req, res) => {
+    try {
+        const { cardId } = req.params;
+        const { sourceColumnId, targetColumnId, newPosition } = req.body;
+
+        // Step 1: Dapatkan detail kartu yang sedang dipindahkan
+        const cardToMove = await getCardById(cardId);
+        if (!cardToMove) {
+            return res.status(404).json({ message: 'Card not found' });
+        }
+
+        const oldPosition = cardToMove.position;
+
+        // Step 2: Geser posisi kartu lain di kolom target sesuai dengan perbedaan posisi lama dan baru
+        await shiftCardPositions(targetColumnId, oldPosition, newPosition);
+
+        // Step 3: Update kolom dan posisi dari kartu yang dipindahkan
+        await updateCardPositionAndColumn(cardId, targetColumnId, newPosition);
+
+        // Step 4: Update posisi kartu lain di kolom asal (jika kolom target berbeda dengan kolom asal)
+        if (sourceColumnId !== targetColumnId) {
+            await rearrangeCardsInColumn(sourceColumnId, cardToMove.position);
+        }
+
+        res.json({ message: 'Card moved successfully' });
+    } catch (err) {
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+
+module.exports = { getCards, addCard, editCard, removeCard, moveCard };
+
+const pool = require('../config/db');
+
+// Mendapatkan semua kartu berdasarkan column ID
+const getCardsByColumnId = async (columnId) => {
+    const res = await pool.query('SELECT * FROM Cards WHERE column_id = $1 ORDER BY position', [columnId]);
+    return res.rows;
+};
+
+// Menambahkan kartu baru ke kolom
+const createCard = async (title, description, position, columnId) => {
+    const res = await pool.query(
+        'INSERT INTO Cards (title, description, position, column_id) VALUES ($1, $2, $3, $4) RETURNING *',
+        [title, description, position, columnId]
+    );
+    return res.rows[0];
+};
+
+// Memperbarui kartu
+const updateCard = async (cardId, title, description) => {
+    const res = await pool.query(
+        'UPDATE Cards SET title = $1, description = $2 WHERE id = $3 RETURNING *',
+        [title, description, cardId]
+    );
+    return res.rows[0];
+};
+
+
+// Menghapus kartu
+const deleteCard = async (cardId) => {
+    await pool.query('DELETE FROM Cards WHERE id = $1', [cardId]);
+};
+
+const getCardById = async (cardId) => {
+    const res = await pool.query('SELECT * FROM Cards WHERE id = $1', [cardId]);
+    return res.rows[0];
+};
+
+const shiftCardPositions = async (columnId, oldPosition, newPosition) => {
+    // Jika kartu dipindahkan ke posisi lebih rendah
+    if (newPosition < oldPosition || oldPosition === undefined) {
+        // Geser kartu lainnya ke bawah (Posisi baru lebih kecil dari posisi lama atau pindah kolom)
+        await pool.query(
+            'UPDATE Cards SET position = position + 1 WHERE column_id = $1 AND position >= $2',
+            [columnId, newPosition]
+        );
+    } else {
+        // Geser kartu lainnya ke atas (Posisi baru lebih besar dari posisi lama)
+        await pool.query(
+            'UPDATE Cards SET position = position - 1 WHERE column_id = $1 AND position >= $2',
+            [columnId, newPosition]
+        );
+    }
+};
+
+
+
+const updateCardPositionAndColumn = async (cardId, columnId, newPosition) => {
+    await pool.query(
+        'UPDATE Cards SET column_id = $1, position = $2 WHERE id = $3',
+        [columnId, newPosition, cardId]
+    );
+};
+
+const rearrangeCardsInColumn = async (columnId, oldPosition) => {
+    await pool.query(
+        'UPDATE Cards SET position = position - 1 WHERE column_id = $1 AND position > $2', // Ubah >= ke >
+        [columnId, oldPosition]
+    );
+};
+
+
+
+module.exports = { getCardsByColumnId, createCard, updateCard, deleteCard,getCardById, shiftCardPositions, updateCardPositionAndColumn, rearrangeCardsInColumn};
