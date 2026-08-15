@@ -1,70 +1,52 @@
-# Getting Started with Create React App
+# Kanban Board — Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+React frontend for a full-stack task-management application with boards, task status tracking, deadlines, drag-and-drop interaction, and real-time updates from the backend.
 
-## Available Scripts
+The project was built to practice state synchronization across a multi-user interface rather than a static task list. Changes made by one connected client can be propagated through Socket.IO so other clients receive updated board state without manually refreshing.
 
-In the project directory, you can run:
+## Features
 
-### `npm start`
+- board and task management
+- task status columns and drag-and-drop movement
+- deadlines and task metadata
+- authentication-aware application flow
+- REST API integration with Axios
+- real-time updates through Socket.IO
+- client-side routing
+- Redux Toolkit state management
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## Stack
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+- React 18
+- Redux Toolkit
+- React Router
+- Axios
+- Socket.IO Client
+- React DnD / React Beautiful DnD
+- Tailwind CSS
 
-### `npm test`
+## Related backend
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+[HaikalE/Kanban-Board-Backend](https://github.com/HaikalE/Kanban-Board-Backend)
 
-### `npm run build`
+The frontend is configured to proxy local API requests to `http://localhost:5000` during development.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Running locally
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+```bash
+git clone https://github.com/HaikalE/Kanban-Board-Frontend.git
+cd Kanban-Board-Frontend
+npm install
+npm start
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Run the backend separately before testing API-dependent or real-time features.
 
-### `npm run eject`
+## Engineering focus
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+The main learning objective was coordinating several forms of application state: local interaction state, persisted server data, and events arriving asynchronously from other clients. The project also provided practical experience integrating REST operations with a WebSocket-style update channel in the same UI.
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## Author
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Muhammad Haikal Rahman  
+[GitHub](https://github.com/HaikalE) · [Portfolio](https://haikale.github.io)
